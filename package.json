@@ -1,0 +1,16 @@
+{
+    "name": "opa-local-cicd-lab",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "engines": { "node": ">=22" },
+    "scripts": {
+        "test": "node scripts/lab.mjs test",
+        "lab:check": "node scripts/lab.mjs check",
+        "lab:negative": "node scripts/lab.mjs negative-tests",
+        "lab:deploy": "node scripts/lab.mjs deploy",
+        "lab:verify": "node scripts/lab.mjs verify",
+        "lab:status": "node scripts/lab.mjs status",
+        "lab:down": "node scripts/lab.mjs down"
+    }
+}

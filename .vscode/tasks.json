@@ -1,0 +1,55 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "OPA lab: policy tests",
+            "type": "process",
+            "command": "node",
+            "args": ["scripts/lab.mjs", "test"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": { "kind": "test", "isDefault": true },
+            "problemMatcher": []
+        },
+        {
+            "label": "OPA lab: check deployment",
+            "type": "process",
+            "command": "node",
+            "args": ["scripts/lab.mjs", "check", "${input:deployment}"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "OPA lab: deploy locally",
+            "type": "process",
+            "command": "node",
+            "args": ["scripts/lab.mjs", "deploy", "${input:deployment}"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "OPA lab: denied examples",
+            "type": "process",
+            "command": "node",
+            "args": ["scripts/lab.mjs", "negative-tests"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "OPA lab: stop deployment",
+            "type": "process",
+            "command": "node",
+            "args": ["scripts/lab.mjs", "down"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "deployment",
+            "type": "pickString",
+            "description": "Deployment settings to evaluate",
+            "options": ["deploy/development.json", "deploy/denied-latest.json", "deploy/denied-privileged.json"],
+            "default": "deploy/development.json"
+        }
+    ]
+}

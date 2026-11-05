@@ -1,0 +1,13 @@
+{
+    "service": "opa-lab",
+    "image": "opa-cicd-demo:latest",
+    "environment": "development",
+    "replicas": 1,
+    "host_port": 18080,
+    "container_port": 8080,
+    "privileged": false,
+    "run_as_user": 1000,
+    "read_only": true,
+    "cap_drop": ["ALL"],
+    "no_new_privileges": true
+}

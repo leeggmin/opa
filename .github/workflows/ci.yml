@@ -1,0 +1,48 @@
+name: OPA Docker CI Lab
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: opa-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  policy-and-deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the lab
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Test Rego policies
+        run: npm test
+
+      - name: Check the proposed deployment
+        run: npm run lab:check
+
+      - name: Confirm unsafe deployments are denied
+        run: npm run lab:negative
+
+      - name: Build and deploy on this temporary CI runner
+        run: npm run lab:deploy
+
+      - name: Verify the running application
+        run: npm run lab:verify
+
+      - name: Remove the CI lab container
+        if: always()
+        run: npm run lab:down
