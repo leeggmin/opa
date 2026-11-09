@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: opa-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
 
 jobs:
   pr-package-access:
@@ -46,8 +46,11 @@ jobs:
   frontend-deployment:
     name: Frontend deployment gate
     if: github.event_name != 'pull_request_target' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64, opa-local]
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
     env:
       OPA_ACCESS_CONTEXT: .opa/access-context.json
     steps:
@@ -77,12 +80,8 @@ jobs:
           npm run lab:negative
 
       # lab:deploy repeats authorization immediately before docker build/run, even when called directly.
-      - name: Build and deploy the frontend on this temporary runner
+      - name: Build and deploy the frontend on the local Docker host
         run: npm run lab:deploy
 
       - name: Verify deployment
         run: npm run lab:verify
-
-      - name: Clean up temporary deployment
-        if: always()
-        run: npm run lab:down

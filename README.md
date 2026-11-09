@@ -64,7 +64,8 @@ flowchart TD
 | [app/server.mjs](app/server.mjs) | 프런트엔드 정적 파일과 SPA 경로, `/health`, `/api/info` 제공 | 정적 파일 제공 방식을 바꿀 때 |
 | [Dockerfile](Dockerfile) | 프런트엔드 빌드와 non-root 정적 서버의 다단계 이미지 | 이미지 구성이나 앱 시작 방법을 바꿀 때 |
 | [package.json](package.json) | `npm test`, `npm run lab:deploy` 등의 명령 별칭 | 명령을 추가하거나 바꿀 때 |
-| [.github/workflows/ci.yml](.github/workflows/ci.yml) | GitHub Actions에서 실행할 검사·임시 배포 순서 | PR이나 push 시 자동 실행할 절차를 바꿀 때 |
+| [.github/workflows/ci.yml](.github/workflows/ci.yml) | GitHub의 PR 검사와 이 PC의 Docker 자동 배포 순서 | PR이나 push 시 자동 실행할 절차를 바꿀 때 |
+| [.github/actionlint.yaml](.github/actionlint.yaml) | 전용 self-hosted 러너 라벨 `opa-local` 선언 | 워크플로 검증에 사용할 러너 라벨을 바꿀 때 |
 | [.vscode/tasks.json](.vscode/tasks.json) | VS Code 작업 메뉴에서 실행할 명령 | 에디터 작업 메뉴를 바꿀 때 |
 | [.dockerignore](.dockerignore) | 앱·프런트엔드 소스만 빌드에 포함하고 비밀 환경 파일·의존성 제외 | 이미지에 추가 파일이 필요할 때 |
 | [.gitignore](.gitignore) | 로그, 로컬 환경 파일 등의 Git 제외 규칙 | 저장소에 올리지 않을 파일을 지정할 때 |
@@ -208,7 +209,7 @@ Docker 이미지, 볼륨, 다른 컨테이너는 삭제하지 않습니다.
 VS Code에서는 명령 팔레트의 `Tasks: Run Task`에서 `OPA lab:` 작업을 선택해도 됩니다.
 검사·배포 작업에서는 기본 입력 또는 거부 예제 중 하나를 선택할 수 있습니다.
 
-## GitHub CI에서 확인하는 방법
+## GitHub PR 검사와 로컬 자동 배포
 
 원격 저장소는 https://github.com/leeggmin/opa 이고, Git 원격 이름은 `origin`입니다.
 공식 OPA의 fork가 아니며, 공식 소스나 Git 이력도 포함하지 않습니다.
@@ -227,8 +228,12 @@ VS Code에서는 명령 팔레트의 `Tasks: Run Task`에서 `OPA lab:` 작업�
 상태 검사가 실패하는 것만으로는 PR 생성이나 병합을 강제로 막지 못합니다. 위 보호 설정이 있어야 **병합**이 차단됩니다.
 이 설정은 저장소 관리 권한이 필요하므로 코드만으로 자동 적용하지 않았습니다.
 
-`main` push/수동 실행의 `Frontend deployment gate` 작업은 해당 SHA의 병합 PR을 찾아 원작성자 권한을 재검사합니다.
-권한 검사 → 정책 테스트 → Docker 설정 검사 → 프런트엔드 빌드·배포 → 헬스 체크 → 컨테이너 정리 순서입니다.
+`main` push/수동 실행의 `Frontend deployment gate` 작업은 **이 PC의 Windows self-hosted 러너**에서 실행됩니다.
+해당 SHA의 병합 PR을 찾아 원작성자 권한을 재검사합니다.
+권한 검사 → 정책 테스트 → Docker 설정 검사 → 프런트엔드 빌드·배포 → 헬스 체크 순서입니다.
+성공하면 이 PC의 `opa-lab` 컨테이너를 유지하므로 http://127.0.0.1:18080 에서 최신 프런트엔드를 확인할 수 있습니다.
+다음 승인된 배포는 새 이미지 빌드에 성공한 뒤 기존 컨테이너를 교체합니다. 작업 완료 후 자동 삭제하지 않습니다.
+진행 중인 배포를 새 push 때문에 취소하지 않으며, 전용 러너는 한 번에 한 작업씩 실행합니다.
 연결된 병합 PR이 없는 직접 push(최초 설정 반영 포함)는 의도적으로 배포를 거부합니다.
 일반 merge/squash 병합을 사용하세요. 여러 PR이 모호하게 연결되거나 rebase 결과로 SHA를 추적할 수 없으면 거부합니다.
 GitHub 변경 파일 API의 최대 3000개를 초과하거나 메타데이터가 불완전해도 거부합니다.
@@ -242,9 +247,32 @@ GitHub 변경 파일 API의 최대 3000개를 초과하거나 메타데이터가
 push 후 저장소의 [Actions 탭](https://github.com/leeggmin/opa/actions)에서 결과와 단계별 로그를 확인합니다.
 첫 push 시 GitHub 저장소에 Actions가 활성화되어 있어야 자동 실행됩니다.
 
-**GitHub Actions는 사용자 PC에 배포하지 않습니다.** GitHub의 임시 실행 환경에서 배포를 재현하고 제거할 뿐이며,
-이미지를 레지스트리에 올리거나 클라우드 서버에 배포하지도 않습니다.
-따라서 지금 구성은 로컬 배포와 CI 검증을 배우는 실습이지, 외부 서버에 계속 서비스를 유지하는 운영 CD는 아닙니다.
+### 로컬 배포 러너 실행 조건
+
+PR 검사는 GitHub의 `ubuntu-latest` 임시 러너에 유지하고, PR의 코드는 이 PC에서 실행하지 않습니다.
+병합 후 배포만 `[self-hosted, Windows, X64, opa-local]` 라벨의 전용 러너에서 실행합니다.
+이 러너는 저장소 밖의 `%LOCALAPPDATA%\GitHubActions\opa-runner`에 설치하며, 실제 checkout은 그 안의 `_work`에서 수행합니다.
+따라서 VS Code 작업 폴더의 브랜치를 바꾸거나 로컬 파일을 저장하는 것만으로 배포되지는 않습니다.
+
+1. 이 PC와 Docker Desktop의 Linux 엔진을 켜 둡니다.
+2. 저장소 `Settings → Actions → Runners`에서 전용 러너가 `Idle` 또는 `Active` 상태인지 확인합니다.
+3. 러너가 꺼져 있으면 아래 명령을 별도 PowerShell 터미널에서 실행하고 그 터미널을 유지합니다.
+4. 프런트엔드 변경을 PR로 올리고 `main`에 병합합니다. Actions의 배포 성공 후 위 앱 주소를 확인합니다.
+
+```powershell
+& "$env:LOCALAPPDATA\GitHubActions\opa-runner\run.cmd"
+```
+
+러너는 현재 사용자 권한으로 실행하며 Windows 서비스나 관리자 권한으로 설치하지 않습니다.
+이미 실행 중이면 중복 실행하지 마세요. 재부팅하거나 러너 터미널을 닫았다면 다시 시작해야 합니다.
+러너가 꺼져 있으면 배포 작업은 대기하며, 이 PC의 기존 컨테이너는 그대로 유지됩니다.
+앱 종료는 `npm run lab:down`으로 명시적으로 수행합니다.
+외부 서버나 이미지 레지스트리를 사용하지 않으며, 앱 주소는 이 PC의 localhost에만 공개합니다.
+
+**보안 경계**: self-hosted 러너는 GitHub의 워크플로 명령을 이 PC의 사용자 권한으로 실행합니다.
+저장소와 `main` 변경 권한을 신뢰할 수 있는 사용자에게만 부여해야 합니다.
+현재 비공개 저장소의 요금제에서는 필수 검사에 의한 병합 보호를 사용할 수 없어, 검사 실패만으로 병합을 강제 차단할 수 없습니다.
+배포 전 OPA 재검사는 유지하지만, 이것이 호스트 자체의 보안 격리나 보호된 브랜치를 대신하지는 않습니다.
 
 ## 주의 사항
 
