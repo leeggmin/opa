@@ -1,4 +1,4 @@
-# Live shared access check
+# Live shared access checks
 
 This documentation-only change tests the shared access rule with a real GitHub PR.
 
