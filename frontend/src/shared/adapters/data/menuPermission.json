@@ -1,0 +1,12 @@
+{
+    "selectStatus": "ALLOW",
+    "insertStatus": "ALLOW",
+    "updateStatus": "ALLOW",
+    "deleteStatus": "ALLOW",
+    "printStatus": "ALLOW",
+    "downStatus": "ALLOW",
+    "manageStatus": "ALLOW",
+    "custom1Status": "ALLOW",
+    "custom2Status": "ALLOW",
+    "custom3Status": "ALLOW"
+}

@@ -1,0 +1,1 @@
+export { NationalManagementPage as default } from './ui/NationalManagementPage';

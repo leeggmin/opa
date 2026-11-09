@@ -1,3 +1,11 @@
 *
 !app/
 !app/server.mjs
+!frontend/
+!frontend/**
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+frontend/docs/
+frontend/*.tsbuildinfo

@@ -1,0 +1,25 @@
+.list {
+}
+.list:hover {
+  cursor: pointer;
+  background-color: #f1f1f1;
+}
+.list:focus,
+.list:focus-within {
+  cursor: pointer;
+  background-color: #eaeaea;
+}
+
+.activate {
+  background-color: #eaeaea;
+}
+
+/*tree*/
+.treestyle[role='treeitem']:focus {
+  /* outline: none; */
+  height: 26px;
+}
+
+.programTreeItem :global(.treeIcon) {
+  display: none;
+}

@@ -1,0 +1,96 @@
+
+.tbl_list table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+  
+    caption {
+      @include itemHidden;
+    }
+  
+    th{
+      font-size: 1.92rem;
+    }
+    td{
+      font-size: 1.92rem;
+    }
+  
+    tbody{
+      th{
+        text-align: left;
+      }
+  
+      tr {
+        &.selected {
+          td {
+            color: white;
+            background: gray !important; 
+  
+            a {
+              color: white;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  /* 목록 테이블 */
+  .tbl_list {
+  
+    table {
+      border-top: 1px solid black;
+    }
+  
+    .tbl_list th,
+    .tbl_list td {
+      height: 10vh;
+      padding: calc(10px+ 1px);
+      color: black;
+      border-bottom: 1px solid gray;
+      cursor: pointer;
+  
+      > *{
+        vertical-align: middle;
+      }
+  
+      &:not(:first-child){
+        border-left: 1px soli dgrayl;
+      }
+    }
+  
+    .tbl_list th {
+      @include font_weight(SemiBold);
+      text-align: center;
+      background: #eaeaea;
+      word-break: keep-all;
+    }
+  
+    .tbl_list tbody {
+      tr {
+        td {
+          background: white;
+          text-align: center;
+          word-break: break-all;
+  
+        }
+/*   
+        // &:last-of-type{
+        //   th, td{
+        //     border-bottom-color: $co-main;
+        //   }
+        // } */
+        
+      }
+    }
+  
+    &:not(:has(thead)){
+      tbody{
+        td{
+          text-align: left;
+        }
+      }
+    }
+  
+    
+}

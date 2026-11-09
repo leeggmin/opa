@@ -1,0 +1,4 @@
+{
+    "actor": "external-contributor",
+    "changes": [{ "filename": "frontend/src/features/example/index.js" }]
+}

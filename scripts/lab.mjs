@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
+import { authorizeFile } from './access.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const opaImage = 'openpolicyagent/opa:1.10.1@sha256:4715d0574ca2f8c5ecd65b4e5b0833a53aea0f79c31e52a93972b104bbd614fd';
@@ -105,7 +106,7 @@ async function verifyDeployment(deployment) {
             const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1000) });
             const health = await response.json();
             if (response.ok && health.status === 'ok') {
-                const details = await fetch(url, { signal: AbortSignal.timeout(1000) });
+                const details = await fetch(`${url}/api/info`, { signal: AbortSignal.timeout(1000) });
                 const body = await details.json();
                 if (!details.ok || body.service !== containerName || body.version !== deployment.image.split(':')[1]) {
                     throw new Error('The deployed application returned unexpected metadata.');
@@ -124,7 +125,9 @@ async function verifyDeployment(deployment) {
     throw new Error(`Deployment did not become healthy: ${url}`);
 }
 
-async function deploy(file) {
+async function deploy(file, accessFile) {
+    // CD gate: repeat package authorization immediately before any build or container replacement.
+    authorizeFile(accessFile || process.env.OPA_ACCESS_CONTEXT, 'deploy');
     testPolicy();
     const deployment = requireApproval(readDeployment(file));
     const existing = ownedContainerExists();
@@ -156,10 +159,10 @@ async function deploy(file) {
 }
 
 try {
-    const [command = 'test', file = 'deploy/development.json', ...extra] = process.argv.slice(2);
+    const [command = 'test', file = 'deploy/development.json', accessFile, ...extra] = process.argv.slice(2);
     const commands = ['test', 'check', 'negative-tests', 'deploy', 'verify', 'status', 'down'];
     if (!commands.includes(command) || extra.length > 0) {
-        throw new Error(`Usage: node scripts/lab.mjs <${commands.join('|')}> [deployment.json]`);
+        throw new Error(`Usage: node scripts/lab.mjs <${commands.join('|')}> [deployment.json] [access-context.json]`);
     }
     requireDocker();
     switch (command) {
@@ -173,7 +176,7 @@ try {
             testDeniedExamples();
             break;
         case 'deploy':
-            await deploy(file);
+            await deploy(file, accessFile);
             break;
         case 'verify':
             await verifyDeployment(requireApproval(readDeployment(file)));

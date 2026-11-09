@@ -1,0 +1,36 @@
+
+/*.Wini_default_Select_Height{
+     font-size: 13px;
+     padding: 5px 14px;
+  }
+.Wini_default_Select_Height > div {
+    height: 16px;
+    font-size: 13px;
+}
+ .WiniOutlinedInput-notchedOutline legend{
+  max-width: 100%;
+} */
+/*.Wini_default_Select_Height  {
+   height: 16px;
+  font-size: 13px;
+  padding-top: 10px;
+  padding-Bottom: 6.5px; 
+}*/
+
+.singleline {
+  /*:global을 붙이면 하위 태그에서 괄호안에 스타일을 찾아서 바꿔준다!*/
+  /* :global(.MuiSelect-select) { padding: 5px 14px 4.5px; font-size:13px !important; }  */
+}
+
+/* .WiniSelect :global(.MuiSelect-select) { padding: 4.5px 14px; font-size:13px !important; } */
+
+.aaaa { 
+  background: red; 
+
+  & .bbbb { background: blue; }
+}
+
+
+
+.aaaa  .bbbb { background: blue; }
+._aaaa_dadsa  ._bbbb_adadasd { background: blue; }

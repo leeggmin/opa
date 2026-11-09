@@ -1,0 +1,242 @@
+/* for openlayers map deployment */
+/**fullHD**/
+/* @media all and  (min-width:1920px){ */
+    .mapHeight{
+        height:calc(var(--vh, 100vh));
+    }
+    .bottomHeight{
+        height:calc(var(--vh, 38vh));
+    }
+/* } */
+/**4k**/
+@media all and (min-width:3840px){
+    .mapHeight{
+        height:calc(var(--vh, 100vh));
+    }
+    .bottomHeight{
+        height:calc(var(--vh, 38vh));
+    }
+}
+
+
+/* chatgpt sourced */
+.ol-popup {
+    position: absolute;
+    background-color: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    bottom: 12px;
+    left: -50px;
+    min-width: 300px;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+  
+  .ol-popup:after, .ol-popup:before {
+    top: 100%;
+    border: solid transparent;
+    /* content: " "; */
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+  }
+  
+  .ol-popup:after {
+    border-top-color: white;
+    border-width: 10px;
+    left: 48px;
+    margin-left: -10px;
+  }
+  
+  .ol-popup:before {
+    border-top-color: #ccc;
+    border-width: 11px;
+    left: 48px;
+    margin-left: -11px;
+  }
+
+
+
+  /* 2023-11-17 */
+
+  .label-check {
+    position: relative;
+    display: inline-block;
+    padding: 2px;
+    border-radius: 6px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .label-check label {
+    display: block;
+    cursor: pointer;
+  }
+  .label-check label + label {
+    margin-top: 2px;
+  }
+
+  .label-check.map input {
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 1px;
+    height: 1px;
+  }
+
+  .label-check.map input + span {
+    display: block;
+    position: relative;
+    padding: 8px 16px 8px 36px;
+    border-radius: 4px;
+    color:#666;
+    line-height: 20px;
+    text-align: left;
+  }
+
+  .label-check.map input + span::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    width: 20px;
+    height: 20px;
+    background: no-repeat;
+    background-size: 20px 20px;
+  }
+
+  .label-check.map input:checked + span {
+    background: #006FDE;
+    color: #fff;
+  }
+
+  .label-check.map .legend01 input + span::before {
+    background-image: url('../../../shared/assets/images/new/ico-legend01.png');
+  }
+
+  .label-check.map .legend01 input:checked + span::before {
+    background-image: url('../../../shared/assets/images/new/ico-legend01_on.png');
+  }
+
+  .label-check.map .legend02 input + span::before {
+    background-image: url('../../../shared/assets/images/new/ico-legend02.png');
+  }
+
+  .label-check.map .legend02 input:checked + span::before {
+    background-image: url('../../../shared/assets/images/new/ico-legend02_on.png');
+  }
+
+  .label-check.map .legend03 input + span::before {
+    background-image: url('../../../shared/assets/images/new/ico-legend03.png');
+  }
+
+  .label-check.map .legend03 input:checked + span::before {
+    background-image: url('../../../shared/assets/images/new/ico-legend03_on.png');
+  }
+
+  .map-total {
+    position: relative;
+    display: inline-block;
+    padding: 36px 12px;
+    border-radius: 6px;
+    background: #fff;
+    overflow: hidden; 
+    min-width: 100px;
+  }
+
+  .map-total dl {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .map-total dl,
+  .map-total dt,
+  .map-total dd {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+
+  .map-total div {
+    position: relative;
+  }
+
+  .map-total div dt {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    font-size: 16px;
+    font-weight: normal;
+    text-align: center;
+    line-height: 24px;
+  }
+
+  .map-total div dd {
+    line-height: 30px !important;
+  }
+
+  .map-total div:first-of-type {
+    margin-top: -24px;
+    padding-top: 24px;
+    color : #006FDE;
+  }
+
+  .map-total div:not(:first-of-type) {
+    margin-bottom: -24px;
+    padding-bottom: 24px
+  }
+
+  .map-total div:first-of-type dt {
+    top: 0;
+  }
+
+  .map-total div:first-of-type dd {
+    font-size: 48px;
+  }
+
+  .map-total div:not(:first-of-type) dt {
+    bottom: 0;
+  }
+
+  .map-total div:not(:first-of-type) dd {
+    font-size: 24px;
+  }
+
+  .map-total div:not(:first-of-type) dd::before {
+    content:'/';
+  }
+
+  .area-dash-sub {
+    width: 100%;
+    height: 240px;
+    padding: 20px;
+  }
+
+  /* .area-dash-sub .MuiPaper-root {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  } */
+
+  .tit-dash {
+    display: block;
+    position: relative;
+    padding: 10px 0;
+    border-bottom: 2px solid #666;
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: left;
+  }
+
+  .tit-dash > * {
+    font-size: inherit;
+  }
+
+  /* .MuiBox-root,
+  .MuiPaper-root {
+    box-shadow: none !important;
+  } */

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wini 컴포넌트 필수/선택 Prop 정리</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #111827;
+      --subtext: #4b5563;
+      --line: #e5e7eb;
+      --line-strong: #d1d5db;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --green: #059669;
+      --green-soft: #d1fae5;
+      --orange: #d97706;
+      --orange-soft: #ffedd5;
+      --purple: #7c3aed;
+      --purple-soft: #ede9fe;
+      --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --max-width: 1440px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      line-height: 1.6;
+    }
+
+    body {
+      padding: 32px 20px 80px;
+    }
+
+    .page {
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+      color: #fff;
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 30px);
+      line-height: 1.25;
+    }
+
+    .hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 15px;
+    }
+
+    .meta-grid,
+    .summary-grid,
+    .detail-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .meta-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 24px 0;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 24px;
+    }
+
+    .detail-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    .meta-card,
+    .summary-card {
+      padding: 20px;
+    }
+
+    .meta-card h2,
+    .section-title,
+    .summary-card h3 {
+      margin: 0 0 8px;
+    }
+
+    .meta-card h2 {
+      font-size: 18px;
+    }
+
+    .meta-card p,
+    .summary-card p {
+      margin: 0;
+      color: var(--subtext);
+      font-size: 14px;
+    }
+
+    .summary-card {
+      padding: 18px 20px;
+    }
+
+    .summary-card .count {
+      display: inline-block;
+      margin-bottom: 8px;
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .count.blue { color: var(--primary); }
+    .count.green { color: var(--green); }
+    .count.orange { color: var(--orange); }
+    .count.purple { color: var(--purple); }
+
+    .section {
+      margin-top: 28px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      margin-bottom: 14px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+    }
+
+    caption {
+      padding: 20px 20px 0;
+      text-align: left;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    thead th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #0f172a;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:hover {
+      background: #fafcff;
+    }
+
+    .component-name {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .badge-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .badge.required {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: #bfdbfe;
+    }
+
+    .badge.optional {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #a7f3d0;
+    }
+
+    .badge.compose {
+      background: var(--orange-soft);
+      color: var(--orange);
+      border-color: #fed7aa;
+    }
+
+    .badge.note {
+      background: var(--purple-soft);
+      color: var(--purple);
+      border-color: #ddd6fe;
+    }
+
+    .detail-card {
+      padding: 22px;
+    }
+
+    .detail-card h3 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .detail-block + .detail-block {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--line-strong);
+    }
+
+    .detail-label {
+      display: inline-block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #374151;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: #334155;
+    }
+
+    .muted {
+      color: var(--subtext);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .footer-note {
+      margin-top: 28px;
+      padding: 18px 20px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-lg);
+      color: #1e3a8a;
+      font-size: 14px;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      body {
+        padding: 20px 14px 56px;
+      }
+      .hero {
+        padding: 24px;
+        border-radius: 22px;
+      }
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+      .section-title {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <h1 id="page-title">Wini 컴포넌트 필수/선택 Prop 정리</h1>
+      <p>
+        <code>src/Pages/wini-samples/component/CompWini*.jsx</code> 가이드 페이지 기준으로 정리한 화면입니다.
+        레이아웃/합성 성격이 강한 컴포넌트는 직접 prop 외에 관련 조합 요소를 함께 표기했습니다.
+      </p>
+    </section>
+
+    <section class="meta-grid" aria-label="문서 기준 정보">
+      <article class="card meta-card">
+        <h2>기준</h2>
+        <p><code>CompWini*.jsx</code> 가이드 페이지 기준</p>
+      </article>
+      <article class="card meta-card">
+        <h2>참고</h2>
+        <p><code>WiniBox</code>, <code>WiniGridLayout</code>, <code>WiniGridItem</code>, <code>WiniList</code>, <code>WiniTreeView</code>, <code>WiniAgGrid</code>는 관련 조합 요소를 별도 분리</p>
+      </article>
+      <article class="card meta-card">
+        <h2>제외</h2>
+        <p><code>CompWiniValue.jsx</code></p>
+      </article>
+    </section>
+
+    <section class="summary-grid" aria-label="요약 카드">
+      <article class="card summary-card">
+        <span class="count blue">17</span>
+        <h3>정리 대상 컴포넌트</h3>
+        <p>가이드 페이지 기준 주요 Wini 컴포넌트</p>
+      </article>
+      <article class="card summary-card">
+        <span class="count green">11</span>
+        <h3>직접 필수 prop 존재</h3>
+        <p>단일 컴포넌트 사용 시 필수값이 명확한 항목</p>
+      </article>
+      <article class="card summary-card">
+        <span class="count orange">4</span>
+        <h3>구성 중심 컴포넌트</h3>
+        <p>조합 구조 자체가 중요한 항목</p>
+      </article>
+      <article class="card summary-card">
+        <span class="count purple">6</span>
+        <h3>관련 조합 요소 분리</h3>
+        <p>단순 prop 외에 함께 봐야 하는 요소 존재</p>
+      </article>
+    </section>
+
+    <section class="section" aria-labelledby="summary-table-title">
+      <h2 id="summary-table-title" class="section-title">한눈에 보는 요약표</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>컴포넌트별 필수/선택/구성 요약</caption>
+          <thead>
+            <tr>
+              <th scope="col">컴포넌트</th>
+              <th scope="col">필수</th>
+              <th scope="col">선택</th>
+              <th scope="col">비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="component-name">WiniAgGrid</span></td>
+              <td><code>rowData</code>, <code>columnDefs</code></td>
+              <td><code>defaultColDef</code>, <code>pagination</code>, <code>paginationUi</code>, <code>paginationPageSize</code>, <code>size</code>, <code>rowSelection</code>, <code>headerHeight</code>, <code>rowHeight</code></td>
+              <td>데이터/컬럼 정의 필수, 외부 페이지네이션 및 선택 상태와 조합 사용</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniBox</span></td>
+              <td>없음</td>
+              <td><code>ui</code>, <code>className</code>, <code>sx</code></td>
+              <td>레이아웃 보조 성격, 내부 래퍼와 GridLayout 조합 빈도 높음</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniButton</span></td>
+              <td><code>children</code></td>
+              <td><code>ui</code>, <code>onClick</code>, <code>className</code>, <code>sx</code>, <code>disabled</code>, <code>loading</code>, <code>loadingPosition</code>, <code>loadingIndicatorColor</code></td>
+              <td>기본 버튼 텍스트 또는 콘텐츠 필수</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniButtonGroup</span></td>
+              <td><code>children</code></td>
+              <td><code>className</code>, <code>sx</code>, <code>ui</code>, <code>itemMinWidth</code></td>
+              <td>하위 버튼 집합 구성 필요</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniCheckbox</span></td>
+              <td><code>label</code>, <code>iconName</code></td>
+              <td><code>checked</code>, <code>defaultChecked</code>, <code>onChange</code>, <code>readOnly</code>, <code>disabled</code>, <code>required</code>, <code>ui</code>, <code>checkedBoxColor</code>, <code>checkedBorderColor</code>, <code>checkedIconName</code>, <code>iconColor</code>, <code>checkedIconColor</code></td>
+              <td>아이콘 기반 체크 표현 포함</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniGridItem</span></td>
+              <td>없음</td>
+              <td><code>ratio</code>, <code>size</code>, <code>xs</code>, <code>sm</code>, <code>md</code>, <code>lg</code>, <code>xl</code>, <code>scrollHidden</code>, <code>className</code></td>
+              <td>WiniGridLayout 안에서 조합 사용</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniGridLayout</span></td>
+              <td>없음</td>
+              <td><code>container</code>, <code>columnSpacing</code>, <code>rowSpacing</code>, <code>className</code>, <code>sx</code>, <code>ui</code>, <code>rowItem</code></td>
+              <td>배치 중심 컴포넌트, GridItem과 함께 사용</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniIcon</span></td>
+              <td><code>icon</code></td>
+              <td><code>children</code>, <code>className</code>, <code>sx</code>, <code>fontSize</code>, <code>aria-label</code>, <code>viewBox</code></td>
+              <td>아이콘 리소스 맵과 검색/필터 UI로 자주 조합</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniIconButton</span></td>
+              <td><code>icon</code></td>
+              <td><code>children</code>, <code>ui</code>, <code>onClick</code>, <code>iconSx</code>, <code>iconOnly</code>, <code>aria-label</code></td>
+              <td>아이콘 단독 또는 텍스트 결합 버튼</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniInputLabel</span></td>
+              <td><code>children</code></td>
+              <td><code>ui</code>, <code>className</code>, <code>sx</code>, <code>htmlFor</code></td>
+              <td>폼 라벨 문자열 또는 노드 필요</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniList</span></td>
+              <td>구성 필수</td>
+              <td><code>listType</code>, <code>ui</code>, <code>className</code>, <code>sx</code>, <code>openDepth1</code>, <code>openDepth2</code>, <code>handleDepth1Toggle</code>, <code>handleDepth2Toggle</code>, <code>changeView</code>, <code>WiniListItem ui</code>, <code>WiniList ui</code>, <code>WiniListItemIcon</code></td>
+              <td>리스트 구조와 depth 제어 방식이 중요</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniRadio</span></td>
+              <td>구성 필수</td>
+              <td><code>WiniRadioGroup value</code>, <code>WiniRadioGroup onChange</code>, <code>WiniRadioGroup row</code>, <code>WiniRadioGroup name</code>, <code>ui</code>, <code>titleFix</code>, <code>labelSx</code>, <code>labelClassName</code>, <code>checked</code>, <code>readOnly</code>, <code>disabled</code>, <code>required</code></td>
+              <td>RadioGroup과 Radio의 값 연결 구조 중요</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniSelect</span></td>
+              <td><code>label</code>, <code>children</code></td>
+              <td><code>value</code>, <code>onChange</code>, <code>defaultValue</code>, <code>MenuProps</code>, <code>ui</code>, <code>titleFix</code>, <code>containerClassName</code>, <code>variant</code>, <code>disabled</code>, <code>required</code></td>
+              <td>옵션 항목 children 기반 구성</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniTab</span></td>
+              <td>구성 필수</td>
+              <td><code>ui</code>, <code>variant</code>, <code>scrollButtons</code></td>
+              <td>Tabs / Tab / TabPanel 값 연결 필수</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniText</span></td>
+              <td><code>label</code></td>
+              <td><code>placeholder</code>, <code>value</code>, <code>onChange</code>, <code>size</code>, <code>variant</code>, <code>className</code>, <code>sx</code>, <code>ui</code>, <code>titleFix</code>, <code>multiline</code>, <code>minRows</code>, <code>required</code>, <code>disabled</code>, <code>slotProps.input.readOnly</code>, <code>slotProps.inputLabel.shrink</code></td>
+              <td>입력 필드 라벨 필수</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniToggleButton</span></td>
+              <td><code>children</code></td>
+              <td><code>ui</code>, <code>icon</code>, <code>defaultSelected</code>, <code>selected</code>, <code>onClick</code>, <code>selectedColor</code>, <code>selectedBgColor</code>, <code>selectedBorderColor</code>, <code>iconOnly</code></td>
+              <td>토글 상태 제어 가능</td>
+            </tr>
+            <tr>
+              <td><span class="component-name">WiniTreeView</span></td>
+              <td><code>winiData</code>, <code>render prop</code>, <code>field</code>, <code>toggleCheck</code></td>
+              <td><code>onChange</code>, <code>height</code>, <code>disableDrag</code>, <code>leaf</code>, <code>name</code></td>
+              <td>데이터 구조와 렌더링 방식이 핵심</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="detail-title">
+      <h2 id="detail-title" class="section-title">컴포넌트 상세 정리</h2>
+      <div class="detail-grid">
+        <article class="card detail-card">
+          <h3>WiniAgGrid</h3>
+          <div class="badge-group">
+            <span class="badge required">필수 prop 존재</span>
+            <span class="badge compose">관련 조합 요소 분리</span>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">필수 prop</span>
+            <div class="chip-list">
+              <span class="chip">rowData</span>
+              <span class="chip">columnDefs</span>
+            </div>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">선택 prop</span>
+            <div class="chip-list">
+              <span class="chip">defaultColDef</span><span class="chip">pagination</span><span class="chip">paginationUi</span><span class="chip">paginationPageSize</span><span class="chip">size</span><span class="chip">rowSelection</span><span class="chip">headerHeight</span><span class="chip">rowHeight</span>
+            </div>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">관련 조합 요소</span>
+            <div class="chip-list">
+              <span class="chip">height wrapper</span><span class="chip">columnDefs[].cellStyle</span><span class="chip">pagedRows</span><span class="chip">selection changed handler</span><span class="chip">rowSelection.mode</span><span class="chip">rowSelection.checkboxes</span><span class="chip">rowSelection.headerCheckbox</span><span class="chip">rowSelection.enableClickSelection</span><span class="chip">체크박스 전용 columnDefs</span><span class="chip">size tuned columnDefs</span><span class="chip">외부 제어 상태</span><span class="chip">외부 상태 버튼</span><span class="chip">WiniPagination count</span><span class="chip">WiniPagination page</span><span class="chip">WiniPagination onChange</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniBox</h3>
+          <div class="badge-group">
+            <span class="badge optional">선택 prop 중심</span>
+            <span class="badge compose">관련 조합 요소 분리</span>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">필수 prop</span>
+            <p class="muted">없음</p>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">선택 prop</span>
+            <div class="chip-list"><span class="chip">ui</span><span class="chip">className</span><span class="chip">sx</span></div>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">관련 조합 요소</span>
+            <div class="chip-list"><span class="chip">WiniGridLayout rowSpacing</span><span class="chip">WiniGridLayout columnSpacing</span><span class="chip">WiniGridLayout rowItem</span><span class="chip">WiniGridLayout className</span><span class="chip">내부 WiniBox ui</span><span class="chip">내부 래퍼 className=&quot;flex-1&quot;</span><span class="chip">내부 래퍼 className=&quot;mt-0&quot;</span></div>
+          </div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniButton</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block">
+            <span class="detail-label">필수 prop</span>
+            <div class="chip-list"><span class="chip">children</span></div>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">선택 prop</span>
+            <div class="chip-list"><span class="chip">ui</span><span class="chip">onClick</span><span class="chip">className</span><span class="chip">sx</span><span class="chip">disabled</span><span class="chip">loading</span><span class="chip">loadingPosition</span><span class="chip">loadingIndicatorColor</span></div>
+          </div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniButtonGroup</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block">
+            <span class="detail-label">필수 prop</span>
+            <div class="chip-list"><span class="chip">children</span></div>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">선택 prop</span>
+            <div class="chip-list"><span class="chip">className</span><span class="chip">sx</span><span class="chip">ui</span><span class="chip">itemMinWidth</span></div>
+          </div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniCheckbox</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block">
+            <span class="detail-label">필수 prop</span>
+            <div class="chip-list"><span class="chip">label</span><span class="chip">iconName</span></div>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">선택 prop</span>
+            <div class="chip-list"><span class="chip">checked</span><span class="chip">defaultChecked</span><span class="chip">onChange</span><span class="chip">readOnly</span><span class="chip">disabled</span><span class="chip">required</span><span class="chip">ui</span><span class="chip">checkedBoxColor</span><span class="chip">checkedBorderColor</span><span class="chip">checkedIconName</span><span class="chip">iconColor</span><span class="chip">checkedIconColor</span></div>
+          </div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniGridItem</h3>
+          <div class="badge-group"><span class="badge optional">선택 prop 중심</span><span class="badge compose">관련 조합 요소 분리</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><p class="muted">없음</p></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">ratio</span><span class="chip">size</span><span class="chip">xs</span><span class="chip">sm</span><span class="chip">md</span><span class="chip">lg</span><span class="chip">xl</span><span class="chip">scrollHidden</span><span class="chip">className</span></div></div>
+          <div class="detail-block"><span class="detail-label">관련 조합 요소</span><div class="chip-list"><span class="chip">WiniGridLayout container</span><span class="chip">WiniGridLayout rowSpacing</span><span class="chip">WiniGridLayout columnSpacing</span><span class="chip">ui=&quot;ratio_숫자&quot;</span><span class="chip">.scrollArea</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniGridLayout</h3>
+          <div class="badge-group"><span class="badge optional">선택 prop 중심</span><span class="badge compose">관련 조합 요소 분리</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><p class="muted">없음</p></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">container</span><span class="chip">columnSpacing</span><span class="chip">rowSpacing</span><span class="chip">className</span><span class="chip">sx</span><span class="chip">ui</span><span class="chip">rowItem</span></div></div>
+          <div class="detail-block"><span class="detail-label">관련 조합 요소</span><div class="chip-list"><span class="chip">WiniGridItem</span><span class="chip">ui=&quot;columnSpacing_숫자&quot;</span><span class="chip">ui=&quot;rowSpacing_숫자&quot;</span><span class="chip">WiniGridItem size</span><span class="chip">WiniGridItem ratio</span><span class="chip">ratio</span><span class="chip">WiniGridItem scrollHidden</span><span class="chip">.scrollArea</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniIcon</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span><span class="badge compose">관련 조합 요소 분리</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><div class="chip-list"><span class="chip">icon</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">children</span><span class="chip">className</span><span class="chip">sx</span><span class="chip">fontSize</span><span class="chip">aria-label</span><span class="chip">viewBox</span></div></div>
+          <div class="detail-block"><span class="detail-label">관련 조합 요소</span><div class="chip-list"><span class="chip">ICONS</span><span class="chip">Object.keys(ICONS)</span><span class="chip">sort()</span><span class="chip">filterKeyword</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniIconButton</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><div class="chip-list"><span class="chip">icon</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">children</span><span class="chip">ui</span><span class="chip">onClick</span><span class="chip">iconSx</span><span class="chip">iconOnly</span><span class="chip">aria-label</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniInputLabel</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><div class="chip-list"><span class="chip">children</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">ui</span><span class="chip">className</span><span class="chip">sx</span><span class="chip">htmlFor</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniList</h3>
+          <div class="badge-group"><span class="badge compose">구성 중심 컴포넌트</span><span class="badge note">depth 제어 중요</span></div>
+          <div class="detail-block"><span class="detail-label">필수 구성 요소</span><div class="chip-list"><span class="chip">WiniListItem</span><span class="chip">WiniListItemText primary</span><span class="chip">section.id / group.id</span><span class="chip">label / title</span><span class="chip">items</span><span class="chip">WiniListSubheader 텍스트</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">listType</span><span class="chip">ui</span><span class="chip">className</span><span class="chip">sx</span><span class="chip">openDepth1</span><span class="chip">openDepth2</span><span class="chip">handleDepth1Toggle</span><span class="chip">handleDepth2Toggle</span><span class="chip">changeView</span><span class="chip">WiniListItem ui</span><span class="chip">WiniList ui</span><span class="chip">WiniListItemIcon</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniRadio</h3>
+          <div class="badge-group"><span class="badge compose">구성 중심 컴포넌트</span></div>
+          <div class="detail-block"><span class="detail-label">필수 구성 요소</span><div class="chip-list"><span class="chip">WiniRadio value</span><span class="chip">WiniRadio label</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">WiniRadioGroup value</span><span class="chip">WiniRadioGroup onChange</span><span class="chip">WiniRadioGroup row</span><span class="chip">WiniRadioGroup name</span><span class="chip">ui</span><span class="chip">titleFix</span><span class="chip">labelSx</span><span class="chip">labelClassName</span><span class="chip">checked</span><span class="chip">readOnly</span><span class="chip">disabled</span><span class="chip">required</span></div></div>
+          <p class="muted">실사용 시에는 <code>WiniRadioGroup</code> + <code>WiniRadio</code> 조합으로 보는 것이 적절합니다.</p>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniSelect</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><div class="chip-list"><span class="chip">label</span><span class="chip">children</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">value</span><span class="chip">onChange</span><span class="chip">defaultValue</span><span class="chip">MenuProps</span><span class="chip">ui</span><span class="chip">titleFix</span><span class="chip">containerClassName</span><span class="chip">variant</span><span class="chip">disabled</span><span class="chip">required</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniTab</h3>
+          <div class="badge-group"><span class="badge compose">구성 중심 컴포넌트</span></div>
+          <div class="detail-block"><span class="detail-label">필수 구성 요소</span><div class="chip-list"><span class="chip">WiniTabs value</span><span class="chip">WiniTabs onChange</span><span class="chip">WiniTab label</span><span class="chip">WiniTab value</span><span class="chip">WiniTabPanel value</span><span class="chip">WiniTabPanel index</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">ui</span><span class="chip">variant</span><span class="chip">scrollButtons</span></div></div>
+          <p class="muted">값 연결 구조가 맞아야 정상적으로 탭과 패널이 동작합니다.</p>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniText</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><div class="chip-list"><span class="chip">label</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">placeholder</span><span class="chip">value</span><span class="chip">onChange</span><span class="chip">size</span><span class="chip">variant</span><span class="chip">className</span><span class="chip">sx</span><span class="chip">ui</span><span class="chip">titleFix</span><span class="chip">multiline</span><span class="chip">minRows</span><span class="chip">required</span><span class="chip">disabled</span><span class="chip">slotProps.input.readOnly</span><span class="chip">slotProps.inputLabel.shrink</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniToggleButton</h3>
+          <div class="badge-group"><span class="badge required">필수 prop 존재</span></div>
+          <div class="detail-block"><span class="detail-label">필수 prop</span><div class="chip-list"><span class="chip">children</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">ui</span><span class="chip">icon</span><span class="chip">defaultSelected</span><span class="chip">selected</span><span class="chip">onClick</span><span class="chip">selectedColor</span><span class="chip">selectedBgColor</span><span class="chip">selectedBorderColor</span><span class="chip">iconOnly</span></div></div>
+        </article>
+
+        <article class="card detail-card">
+          <h3>WiniTreeView</h3>
+          <div class="badge-group"><span class="badge compose">구성 중심 컴포넌트</span><span class="badge note">데이터 구조 중요</span></div>
+          <div class="detail-block"><span class="detail-label">필수 구성 요소</span><div class="chip-list"><span class="chip">winiData</span><span class="chip">render prop</span><span class="chip">field</span><span class="chip">toggleCheck</span></div></div>
+          <div class="detail-block"><span class="detail-label">선택 prop</span><div class="chip-list"><span class="chip">onChange</span><span class="chip">height</span><span class="chip">disableDrag</span><span class="chip">leaf</span><span class="chip">name</span></div></div>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

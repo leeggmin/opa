@@ -1,0 +1,53 @@
+/* 정렬문제떄문에 변경 */
+.ag-row .ag-cell {
+    /*   display: flex;
+    justify-content: center; align horizontal
+    align-items: center; */
+    line-height: 30px;
+}
+/* .ag-theme-material .ag-header-cell{
+    line-height: 39px;
+}.ag-theme-material .ag-header-cell-menu-button .ag-icon-menu {
+    height: 39px;
+} */
+
+/* .ag-cell {
+    border: 1px solid #ccc;
+}
+.ag-row {
+    height: auto !important;
+} */
+
+.ag-cell {
+    /* background-color: white; */
+}
+.cell-span{
+    border-bottom: 1px solid #DDDDDE;
+    background: #fefefe;
+    vertical-align: middle;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.ag-cell.cell-span {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    /* padding-top:2px; */
+    
+    
+}
+.cell-hidden {
+    display: none;
+}
+.ag-grid-rospan-white-background {
+    /* background-color: white !important;
+    border-bottom: 1px solid #DDDDDE;
+    margin-right: 0px;
+    margin-left: 0px;    */
+}
+.ag-cell.cell-hidden-border {
+    /* background-color: white !important;
+    border-top: none !important; */
+    /*pointer-events: none;    👈 클릭 막기 */
+    /*user-select: none;      /* 👈 드래그 선택도 막기 */
+}

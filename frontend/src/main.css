@@ -1,0 +1,14 @@
+@config "../tailwind.config.js";
+
+@layer theme, base, mui, components, utilities;
+
+@import './colors.css';
+@import './sizes.css';
+
+@layer base {
+  html {
+    font-size: 62.5%;
+  }
+}
+
+@import 'tailwindcss';

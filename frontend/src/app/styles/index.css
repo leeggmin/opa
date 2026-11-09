@@ -1,0 +1,8 @@
+/* App 전역 스타일 */
+
+@import './fonts/static/pretendard.css';
+@import './fonts/static/pretendardGOV.css';
+@import './reset.css';
+@import './scrollbar.css';
+@import './editor.css';
+@import './components.css';

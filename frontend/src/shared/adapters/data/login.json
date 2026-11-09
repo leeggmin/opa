@@ -1,0 +1,26 @@
+{
+    "result": "SUCCESS",
+    "data": {
+        "userId": "0194cf9a-86b4-7ff6-819a-02557f94ee3f",
+        "fullName": "관리자",
+        "accessToken": "mock-jwt-access-token",
+        "department": "개발팀",
+        "duty": "ADMIN",
+        "tokenSerial": "mock-token-serial",
+        "userOrganizationList": [
+        {
+            "organizationId": "0194cf50-32af-720b-99ad-84e57a5568b0",
+            "organizationCode": "System",
+            "organizationName": "시스템관리",
+            "userGroupId": "01951d1b-2eca-7ffa-912b-0fefcebbf17a",
+            "userGroupCode": "ADMIN"
+        }
+        ]
+    },
+    "metadata": {
+        "timestamp": "2026-05-29T09:00:00"
+    },
+    "message": null,
+    "errorCode": null,
+    "errorCodeName": null
+}

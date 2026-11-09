@@ -22,7 +22,15 @@
             "label": "OPA lab: deploy locally",
             "type": "process",
             "command": "node",
-            "args": ["scripts/lab.mjs", "deploy", "${input:deployment}"],
+            "args": ["scripts/lab.mjs", "deploy", "${input:deployment}", "${input:access}"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "OPA lab: package access (PR and CD)",
+            "type": "process",
+            "command": "node",
+            "args": ["scripts/access.mjs", "check", "${input:access}"],
             "options": { "cwd": "${workspaceFolder}" },
             "problemMatcher": []
         },
@@ -44,6 +52,13 @@
         }
     ],
     "inputs": [
+        {
+            "id": "access",
+            "type": "pickString",
+            "description": "Simulated author and changed files (not real GitHub identity)",
+            "options": ["examples/access/member-shared.json", "examples/access/nonmember-feature.json", "examples/access/nonmember-shared.json"],
+            "default": "examples/access/member-shared.json"
+        },
         {
             "id": "deployment",
             "type": "pickString",

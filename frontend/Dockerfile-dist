@@ -1,0 +1,21 @@
+# ----------------
+# production stage
+# ----------------
+
+# 최신 버전 nginx 이미지 사용
+FROM nginx:1.28.0-alpine-slim  
+
+EXPOSE 8080
+
+# nginx 설정 파일 복사
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+
+WORKDIR /app
+
+# 배포 파일 디렉터리 생성
+RUN mkdir ./build
+
+COPY ./dist/ ./build
+
+# nginx 실행
+CMD ["nginx", "-g", "daemon off;"]

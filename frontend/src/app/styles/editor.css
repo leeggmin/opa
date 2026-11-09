@@ -1,0 +1,96 @@
+/*WiniEditor 이미지*/
+.wini-editor-inline-image-placeholder {
+  display: none;
+  color: #666;
+  background: #f9f9f9;
+  padding: 1rem 2rem;
+  margin: 0;
+  border-radius: 0.5rem;
+}
+
+.wini-editor-inline-image--loading + .wini-editor-inline-image-placeholder,
+.wini-editor-inline-image--error + .wini-editor-inline-image-placeholder {
+  display: inline-block;
+}
+
+.wini-editor-inline-image--loading
+  + .wini-editor-inline-image-placeholder:after {
+}
+
+.wini-editor-inline-image--loading
+  + .wini-editor-inline-image-placeholder
+  .wini-editor-inline-image-placeholder__icon {
+  display: block;
+  margin: 0.25rem auto;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgb(46, 125, 50, 0.2);
+  box-sizing: border-box;
+  border-top-color: #2e7d32;
+  border-radius: 100%;
+
+  animation: mainrotate 1s ease-in-out infinite;
+}
+
+.wini-editor-inline-image--error {
+  display: none;
+}
+.wini-editor-inline-image--error + .wini-editor-inline-image-placeholder:after {
+  content: '이미지를 불러오는데 실패했습니다.';
+  cursor: pointer;
+}
+.wini-editor-inline-image--error
+  + .wini-editor-inline-image-placeholder
+  .wini-editor-inline-image-placeholder__icon {
+  display: block;
+  margin: 0.25rem auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  animation: none;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="gray"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>')
+    no-repeat;
+}
+
+/*WiniEditor 편집 중 이미지 오류 처리*/
+.toastui-editor.ww-mode .wini-editor-inline-image--error {
+  display: inline-block;
+  min-width: 100px;
+  min-height: 24px;
+  background: #f9f9f9
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="gray"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>')
+    no-repeat;
+  background-size: 24px 24px;
+  background-position: center center;
+  border-radius: 0.5rem;
+}
+
+/* Toast UI Editor 본문 폰트 사이즈 */
+.toastui-editor-contents {
+  font-size: 1.5rem !important;
+}
+/* 에디터 입력 영역 폰트 사이즈 */
+.toastui-editor-md-container,
+.toastui-editor-ww-container {
+  padding: 5px;
+  /* font-size: 1rem !important; */
+}
+.toastui-editor-popup-add-image > .toastui-editor-popup-body > div > label,
+.toastui-editor-popup-add-image #toastuiAltTextInput {
+  display: none;
+}
+/*editor 번호매기기 가로길이 오류*/
+.toastui-editor-contents ol > li:before {
+  width: 25px !important;
+}
+.toastui-editor-contents {
+  padding: 0px 3px !important;
+}
+/*에디터 코드 글자사이즈*/
+.toastui-editor-contents code {
+  /* font-size: 0.9rem; */
+}
+/*에디터 코드 글자높인*/
+.toastui-editor-contents *:not(table) {
+  line-height: 133% !important;
+}

@@ -1,0 +1,1 @@
+export { Palette as UiBuilderPalette } from './ui/Palette';

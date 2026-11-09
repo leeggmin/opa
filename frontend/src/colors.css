@@ -1,0 +1,63 @@
+@layer theme {
+  :root {
+    --c-primary-main: 0 64 127; /* #00407F */
+    --c-primary-hover: 139 186 232; /* #8BBAE8 */
+
+    --c-gray-light: 245 245 245; /* #f5f5f5 */
+    --c-gray-eee: 238 238 238; /* #eee */
+    --c-gray-ddd: 221 221 221; /* #ddd */
+    --c-gray-ccc: 204 204 204; /* #ccc */
+    --c-gray-bbb: 187 187 187; /* #bbb */
+    --c-gray-aaa: 170 170 170; /* #aaa */
+    --c-gray-999: 153 153 153; /* #999 */
+    --c-gray-666: 102 102 102; /* #666 */
+    --c-gray-333: 51 51 51; /* #333 */
+    --c-gray-dark: 29 29 29; /* #1D1D1D */
+
+    --c-brand-main: 0 64 127; /* #00407F */
+    --c-brand-sub1: 15 64 134; /* #1976D2 */
+    --c-brand-sub2: 45 170 194; /* #2DAAC2 */
+    --c-brand-point: 255 0 0; /* #FF0000 */
+
+    --c-text-main: 0 64 127; /* #00407F */
+    --c-text-sub: 102 102 102; /* #666 */
+	--c-text-sub1: 15 64 134; /* #1976D2 */
+    --c-text-sub2: 45 170 194; /* #2DAAC2 */
+    --c-text-white: 255 255 255; /* #fff */
+    --c-text-light: 153 153 153; /* #999 */
+    --c-text-default: 102 102 102; /* #666 */
+    --c-text-dark: 51 51 51; /* #333 */
+    --c-text-darken: 29 29 29; /* #1D1D1D */
+    --c-text-black: 0 0 0; /* #000 */
+    --c-text-point: 255 0 0; /* #FF0000 */
+    --c-text-disabled: 153 153 153; /* #999 */
+    --c-text-disabled-dark: 118 118 118; /* #767676 */
+
+    --c-border-default: 187 187 187; /* #bbb */
+    --c-border-main: 0 64 127; /* #00407F */
+	--c-border-sub1: 15 64 134; /* #1976D2 */
+    --c-border-sub2: 45 170 194; /* #2DAAC2 */
+    --c-border-point: 255 0 0; /* #FF0000 */
+    --c-border-dark: 102 102 102; /* #666 */
+    --c-border-white: 255 255 255; /* #fff */
+    --c-border-black: 0 0 0; /* #000 */
+    --c-border-disabled: 221 221 221; /* #ddd */
+    --c-border-disabled-dark: 187 187 187; /* #bbb */
+
+    --c-background-main: 0 64 127; /* #00407F */
+    --c-background-main-light: 241 249 253; /* #F1F9FD */
+	--c-background-sub1: 15 64 134; /* #1976D2 */
+    --c-background-sub2: 45 170 194; /* #2DAAC2 */
+    --c-background-white: 255 255 255; /* #fff */
+    --c-background-offwhite: 245 245 245; /* #f5f5f5 */
+    --c-background-divider: 221 221 221; /* #ddd */
+    --c-background-disabled: 253 253 253; /* #FDFDFD */
+    --c-background-readonly: 238 238 238; /* #eee */
+    --c-background-disabled-dark: 221 221 221; /* #ddd */
+
+    --c-state-error: 255 0 0; /* red */
+    --c-state-caution: 255 165 0; /* orange */
+
+    --c-delete: 255 0 0; /* red */
+  }
+}

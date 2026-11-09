@@ -1,0 +1,15 @@
+.list {
+}
+.list:hover {
+  cursor: pointer;
+  background-color: #f1f1f1;
+}
+.list:focus,
+.list:focus-within {
+  cursor: pointer;
+  background-color: #eaeaea;
+}
+
+.activate {
+  background-color: #eaeaea;
+}

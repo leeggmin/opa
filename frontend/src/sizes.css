@@ -1,0 +1,48 @@
+/* src/styles/sizes.css */
+
+/* 디자인 토큰: 앱 전체에서 참조할 값들 */
+@layer theme {
+  :root {
+	
+    /* 글자 크기 스케일 */
+    --size-xxs: 11px;
+    --size-xs: 12px;
+    --size-sm: 14px;
+    --size-md: 16px;
+    --size-lg: 18px;
+    --size-xl: 20px;
+    --size-xxl: 24px;
+
+    /* 라인 하이트 */
+    --lh-none: 1;
+    --lh-tight: 1.2;
+    --lh-normal: 1.4;
+    --lh-loose: 1.7;
+
+    /* spacing scale */
+    --margin-xsm: 2px;
+    --margin-sm: 4px;
+    --margin-md: 8px;
+    --margin-lg: 12px;
+    --margin-xl: 16px;
+    --margin-xxl: 20px;
+    --margin-xxxl: 24px;
+
+    /* radius scale */
+    --radius-xsm: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 14px;
+
+    /* input/button 같은 컴포넌트 기본 높이 */
+    --obj-h-sm: 32px;
+    --obj-h-md: 40px;
+    --obj-h-lg: 48px;
+
+    /* icon 같은 컴포넌트 기본 높이 */
+    --icon-h-sm: 18px;
+    --icon-h-md: 20px;
+    --icon-h-lg: 24px;
+  }
+}

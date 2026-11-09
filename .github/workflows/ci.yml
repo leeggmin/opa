@@ -1,48 +1,88 @@
-name: OPA Docker CI Lab
+name: OPA Frontend Access
 
 on:
-  pull_request:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
   push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
-  group: opa-lab-${{ github.ref }}
+  group: opa-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  policy-and-deployment:
+  pr-package-access:
+    name: PR package access
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Check out the lab
+      # 1차 PR 차단: 기준 브랜치의 정책/코드만 사용하고 PR의 코드는 절대 실행하지 않습니다.
+      - name: Check out trusted base revision
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
 
-      - name: Test Rego policies
+      - name: Test trusted policies
         run: npm test
 
-      - name: Check the proposed deployment
-        run: npm run lab:check
+      # main 보호 규칙에서 'PR package access'를 필수 검사로 지정해야 병합이 실제 차단됩니다.
+      - name: Block non-member shared changes before merge
+        run: npm run access:github -- pr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Confirm unsafe deployments are denied
-        run: npm run lab:negative
+  frontend-deployment:
+    name: Frontend deployment gate
+    if: github.event_name != 'pull_request_target' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OPA_ACCESS_CONTEXT: .opa/access-context.json
+    steps:
+      - name: Check out exact deployment revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
-      - name: Build and deploy on this temporary CI runner
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # 2차 배포 차단: 배포 SHA의 병합된 PR을 찾아 병합자가 아닌 원래 PR 작성자를 재검사합니다.
+      # 직접 push나 불완전한 메타데이터는 빌드/배포 전에 차단합니다.
+      - name: Recheck package access before deployment
+        run: npm run access:github -- deploy
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Test policies and provenance collector
+        run: npm test
+
+      - name: Check Docker settings and denial examples
+        run: |
+          npm run lab:check
+          npm run lab:negative
+
+      # lab:deploy repeats authorization immediately before docker build/run, even when called directly.
+      - name: Build and deploy the frontend on this temporary runner
         run: npm run lab:deploy
 
-      - name: Verify the running application
+      - name: Verify deployment
         run: npm run lab:verify
 
-      - name: Remove the CI lab container
+      - name: Clean up temporary deployment
         if: always()
         run: npm run lab:down

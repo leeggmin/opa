@@ -1,0 +1,66 @@
+/*ag grid*/
+.ag-checkbox-edit,
+.ag-checkbox-cell {
+  justify-content: center;
+  padding-right: 0;
+}
+.ag-header-group-cell-label,
+.ag-header-cell-label {
+  justify-content: center;
+}
+.ag-input-field-input[type='checkbox'] {
+  margin: 0px;
+}
+
+/*레이아웃 서치바 searchbar search-bar*/
+.winistack .wini-Search-bar,
+.winigridlayout .wini-Search-bar,
+.winibox .wini-Search-bar {
+  flex-grow: 1;
+  background-color: #fbfafa;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+}
+/* 이부분은 편의인데 아니다싶으면 지워버리자*/
+.winistack .wini-Search-bar > div,
+.winibox .wini-Search-bar > div,
+.winigridlayout .wini-Search-bar > div {
+  margin-top: 4px;
+}
+.winistack .wini-Search-bar > button,
+.winibox .wini-Search-bar > button,
+.winigridlayout .wini-Search-bar > button {
+  margin-top: 3px;
+}
+.winistack .wini-Search-bar > div:has(> .winibutton),
+.winibox .wini-Search-bar > div:has(> .winibutton),
+.winigridlayout .wini-Search-bar > div:has(> .winibutton) {
+  margin-top: 2px;
+}
+
+/*msgbox*/
+.globalMsgBox .MuiPaper-root {
+  min-width: 250px;
+}
+/* .globalmodal_background {
+background-color:rgba(0, 0, 0, 0.5);
+}
+.globalMsgBox .MuiBackdrop-root {
+background-color:transparent;
+}
+.globalMsgBox .MuiPaper-root{
+box-shadow: none;
+border:1px solid #adadad;
+background-color: #f1f1f1
+} */
+/*모달 다중 백그라운드 없애기*/
+.globalMsgBox.MuiDialog-root[aria-hidden=true] .MuiBackdrop-root {
+  background-color: transparent;
+}
+
+.globalMsgBox.MuiDialog-root[aria-hidden=true] .MuiPaper-root {
+  box-shadow: none;
+}

@@ -1,0 +1,5 @@
+/*tree*/
+.treestyle[role='treeitem']:focus {
+  /* outline: none; */
+  height: 26px;
+}
