@@ -1,7 +1,8 @@
 # OPA로 실습하는 로컬 Docker CI/CD
 
 OPA(Open Policy Agent)를 **배포 전에 규칙을 검사하는 정책 엔진**으로 사용하는 실습입니다.
-공식 OPA 소스를 개발하거나 컴파일하지 않고, 버전과 digest가 고정된 OPA Docker 이미지를 실행합니다.
+공식 OPA 소스를 개발하거나 컴파일하지 않고, GitHub Actions에서는 OPA CLI를 직접 실행합니다.
+로컬 명령과 배포 실행기의 재검사에는 버전과 digest가 고정된 OPA Docker 이미지를 사용합니다.
 
 핵심은 **배포하려는 설정을 OPA에 전달하고, 허용된 경우에만 Docker 배포를 실행하는 것**입니다.
 OPA가 직접 배포하지는 않습니다. 실제 빌드와 배포는 이 프로젝트의 Node.js 실행기가 담당합니다.
@@ -49,7 +50,7 @@ flowchart TD
 | [policy/access.rego](policy/access.rego) | `shared`와 권한 제어 파일을 멤버만 변경하도록 하는 PR/CD 공통 정책 | 변경 가능한 범위를 바꿀 때 |
 | [policy/members.json](policy/members.json) | 멤버 GitHub 로그인 목록. 기본값은 `leeggmin` | 멤버를 추가/삭제할 때 |
 | [policy/access_test.rego](policy/access_test.rego) | 멤버/비멤버, 이름 변경, 우회와 누락 입력 테스트 | 권한 정책을 수정할 때 |
-| [scripts/access.mjs](scripts/access.mjs) | 실제 GitHub 작성자·변경 파일 수집과 PR/CD 권한 검사 | GitHub 연결이나 신원 수집을 바꿀 때 |
+| [scripts/access.mjs](scripts/access.mjs) | CI의 GitHub 입력 수집과 로컬·배포 실행기의 권한 재검사 | GitHub 연결이나 신원 수집을 바꿀 때 |
 | [scripts/access.test.mjs](scripts/access.test.mjs) | 원작성자 추적, 직접 push와 불완전한 메타데이터 차단 테스트 | 입력 수집을 수정할 때 |
 | [examples/access/member-shared.json](examples/access/member-shared.json) | 멤버의 `shared` 변경 예제 | 허용 실습 |
 | [examples/access/nonmember-feature.json](examples/access/nonmember-feature.json) | 비멤버의 일반 기능 변경 예제 | 허용 실습 |
@@ -127,7 +128,7 @@ flowchart TD
 npm test
 ```
 
-Node 메타데이터 수집 테스트 6개와 Rego 테스트 14개가 통과해야 합니다.
+Node 메타데이터 수집 테스트 8개와 Rego 테스트 14개가 통과해야 합니다.
 정상 설정을 허용하고 위험한 설정, 필드 누락, 잘못된 타입을 거부하는지 확인합니다.
 이 명령은 앱을 배포하지 않습니다.
 
@@ -169,7 +170,7 @@ npm run lab:deploy -- deploy/development.json examples/access/member-shared.json
 
 여기서 실행되는 앱은 OPA 서버가 아니라 복사한 실제 프런트엔드입니다.
 원본의 백엔드는 포함하지 않았으므로 로그인·업무 API 기능은 별도 백엔드 없이는 동작하지 않습니다.
-OPA는 검사할 때만 일회성 컨테이너로 실행되고 제거됩니다.
+이 로컬 명령에서는 OPA가 검사할 때만 일회성 컨테이너로 실행되고 제거됩니다.
 앱 컨테이너 `opa-lab`은 종료 명령을 실행할 때까지 유지됩니다.
 
 포트 18080이 사용 중이면 기본 배포 JSON의 `host_port`를 비어 있는 허용 범위 포트로 변경합니다.
@@ -213,6 +214,45 @@ VS Code에서는 명령 팔레트의 `Tasks: Run Task`에서 `OPA lab:` 작업�
 
 원격 저장소는 https://github.com/leeggmin/opa 이고, Git 원격 이름은 `origin`입니다.
 공식 OPA의 fork가 아니며, 공식 소스나 Git 이력도 포함하지 않습니다.
+
+### YAML에서 OPA 직접 실행
+
+PR 검사와 배포 전 검사는 `open-policy-agent/setup-opa@v2`로 OPA CLI **1.10.1**을 설치하고,
+YAML의 `run`에서 `opa test`와 `opa eval`을 직접 실행합니다. 별도 OPA 서버는 필요 없습니다.
+`latest` 대신 로컬 정책 실행기와 같은 버전을 고정합니다.
+
+PR 작업의 핵심 단계는 다음과 같습니다. 전체 단계는 [.github/workflows/ci.yml](.github/workflows/ci.yml)에 있습니다.
+
+```yaml
+- uses: open-policy-agent/setup-opa@v2
+     with:
+          version: '1.10.1'
+- run: opa test policy/ -v
+- name: Collect trusted PR input
+     run: node scripts/access.mjs collect pr
+     env:
+          GITHUB_TOKEN: ${{ github.token }}
+- name: Evaluate PR access directly with OPA
+     run: |
+          opa eval --format pretty --input .opa/access-context.json --data policy/access.rego --data policy/members.json data.access
+          opa eval --fail --format raw --input .opa/access-context.json --data policy/access.rego --data policy/members.json 'data.access.allow = true'
+```
+
+`collect pr`와 `collect deploy`는 GitHub API 메타데이터를 검증해 `.opa/access-context.json`만 만듭니다.
+이 명령은 OPA를 실행하거나 권한을 승인하지 않습니다. 다음 YAML 단계가 입력 JSON과 정책·멤버 데이터를 OPA에 전달합니다.
+Rego가 직접 GitHub나 파일을 조회하는 구조가 아닙니다.
+
+`opa eval --fail`은 결과가 정의되지 않았을 때 실패하므로, 단순 값 조회나 `== true` 비교식은 `false`를 반환해도 정상 종료할 수 있습니다.
+통합식 `data.access.allow = true`를 질의하면 실제 허용 값이 `true`일 때만 성립하고, 거부·미정의 결과는 실패합니다.
+평가 오류도 숨기지 않고 작업을 중단합니다.
+Windows 배포 작업은 각 OPA 명령 직후 `$LASTEXITCODE`를 확인합니다.
+작성자 권한 외에 배포 JSON의 허용 여부와 위험 설정 예제도 YAML에서 직접 평가합니다.
+
+Node 스크립트는 GitHub 입력의 출처·완전성 검증과 Docker 빌드·실행에 계속 사용합니다.
+기존 `github` 명령의 수집·평가 통합 기능과 `lab:deploy` 내부의 OPA Docker 재검사는 유지합니다.
+따라서 YAML을 거치지 않고 배포 실행기를 직접 호출해도 권한·배포 설정 검사가 생략되지 않습니다.
+
+### 검사 기준과 병합 보호
 
 워크플로를 먼저 신뢰하는 `main`에 반영해야 이후 PR부터 새 검사가 동작합니다.
 `pull_request_target`의 `PR package access` 작업은 **기준 브랜치만 checkout**하고 PR 코드를 실행하지 않습니다.

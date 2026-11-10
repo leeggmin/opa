@@ -34,14 +34,27 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Test trusted policies
-        run: npm test
+      - name: Set up OPA CLI
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: '1.10.1'
 
-      # main 보호 규칙에서 'PR package access'를 필수 검사로 지정해야 병합이 실제 차단됩니다.
-      - name: Block non-member shared changes before merge
-        run: npm run access:github -- pr
+      - name: Test GitHub input collection
+        run: node --test scripts/access.test.mjs
+
+      - name: Test trusted Rego policies directly
+        run: opa test policy/ -v
+
+      - name: Collect trusted PR input
+        run: node scripts/access.mjs collect pr
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
+      # main 보호 규칙에서 'PR package access'를 필수 검사로 지정해야 병합이 실제 차단됩니다.
+      - name: Evaluate PR access directly with OPA
+        run: |
+          opa eval --format pretty --input .opa/access-context.json --data policy/access.rego --data policy/members.json data.access
+          opa eval --fail --format raw --input .opa/access-context.json --data policy/access.rego --data policy/members.json 'data.access.allow = true'
 
   frontend-deployment:
     name: Frontend deployment gate
@@ -64,20 +77,44 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Set up OPA CLI
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: '1.10.1'
+
       # 2차 배포 차단: 배포 SHA의 병합된 PR을 찾아 병합자가 아닌 원래 PR 작성자를 재검사합니다.
       # 직접 push나 불완전한 메타데이터는 빌드/배포 전에 차단합니다.
-      - name: Recheck package access before deployment
-        run: npm run access:github -- deploy
+      - name: Collect trusted deployment input
+        run: node scripts/access.mjs collect deploy
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Test policies and provenance collector
-        run: npm test
-
-      - name: Check Docker settings and denial examples
+      - name: Evaluate deployment access directly with OPA
         run: |
-          npm run lab:check
-          npm run lab:negative
+          opa eval --format pretty --input $env:OPA_ACCESS_CONTEXT --data policy/access.rego --data policy/members.json data.access
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          opa eval --fail --format raw --input $env:OPA_ACCESS_CONTEXT --data policy/access.rego --data policy/members.json 'data.access.allow = true'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test GitHub input collection
+        run: node --test scripts/access.test.mjs
+
+      - name: Test Rego policies directly
+        run: opa test policy/ -v
+
+      - name: Check Docker settings directly with OPA
+        run: |
+          opa eval --format pretty --input deploy/development.json --data policy/deploy.rego data.deploy
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          opa eval --fail --format raw --input deploy/development.json --data policy/deploy.rego 'data.deploy.allow = true'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check denial examples directly with OPA
+        run: |
+          foreach ($example in @('deploy/denied-latest.json', 'deploy/denied-privileged.json')) {
+            opa eval --fail --format raw --input $example --data policy/deploy.rego 'data.deploy.allow = false; some reason in data.deploy.deny'
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       # lab:deploy repeats authorization immediately before docker build/run, even when called directly.
       - name: Build and deploy the frontend on the local Docker host

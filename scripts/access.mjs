@@ -103,8 +103,8 @@ async function main() {
         authorize(context, 'deploy');
         return;
     }
-    if (command !== 'github' || !['pr', 'deploy'].includes(argument)) {
-        throw new Error('Usage: node scripts/access.mjs check [example.json] | github <pr|deploy>');
+    if (!['github', 'collect'].includes(command) || !['pr', 'deploy'].includes(argument)) {
+        throw new Error('Usage: node scripts/access.mjs check [example.json] | github <pr|deploy> | collect <pr|deploy>');
     }
     if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_EVENT_PATH) {
         throw new Error('GitHub API token and event file are required for real identity collection.');
@@ -130,8 +130,10 @@ async function main() {
         sha: process.env.GITHUB_SHA,
         request,
     });
-    authorize(context, argument);
-    if (argument === 'deploy') {
+    if (command === 'github') {
+        authorize(context, argument);
+    }
+    if (command === 'collect' || argument === 'deploy') {
         const output = resolve(root, '.opa/access-context.json');
         mkdirSync(dirname(output), { recursive: true });
         writeFileSync(output, `${JSON.stringify(context, null, 2)}\n`);
