@@ -2,10 +2,11 @@
 
 OPA(Open Policy Agent)를 **배포 전에 규칙을 검사하는 정책 엔진**으로 사용하는 실습입니다.
 공식 OPA 소스를 개발하거나 컴파일하지 않고, GitHub Actions에서는 OPA CLI를 직접 실행합니다.
-로컬 명령과 배포 실행기의 재검사에는 버전과 digest가 고정된 OPA Docker 이미지를 사용합니다.
+기존 수동 실행 명령에는 버전과 digest가 고정된 OPA Docker 이미지를 사용합니다.
 
 핵심은 **배포하려는 설정을 OPA에 전달하고, 허용된 경우에만 Docker 배포를 실행하는 것**입니다.
-OPA가 직접 배포하지는 않습니다. 실제 빌드와 배포는 이 프로젝트의 Node.js 실행기가 담당합니다.
+OPA가 직접 배포하지는 않습니다. CI/CD의 입력 수집과 Docker 배포는 YAML 안의 셸 명령이 담당합니다.
+CI/CD에서는 사용자 정의 Node 스크립트나 루트의 `npm run lab:*` 명령을 호출하지 않습니다.
 
 현재 예제 앱은 `wcnaf/services/frontend`에서 복사한 React/Vite 프로젝트입니다.
 원본은 보존하고 [frontend/package.json](frontend/package.json), `src`, 정적 파일, 잠금 파일 등을 가져왔습니다.
@@ -17,7 +18,7 @@ OPA가 직접 배포하지는 않습니다. 실제 빌드와 배포는 이 프�
 ```mermaid
 flowchart TD
      P[PR 작성자와 변경 파일 조회] --> Q{패키지 권한 검사}
-     Q -->|거부| R[필수 검사 실패로 병합 차단]
+     Q -->|거부| R[PR 검사 실패 / 병합 강제 차단은 보호 설정 필요]
      Q -->|허용 후 병합| A[배포 SHA의 원래 PR 작성자 재검사]
      A -->|거부| E[종료 코드 1로 중단 / 기존 컨테이너 유지]
      A -->|허용| B[Rego 정책 단위 테스트]
@@ -35,7 +36,8 @@ flowchart TD
 ## 준비 사항
 
 - Docker Desktop: Linux 컨테이너 엔진을 실행합니다.
-- Node.js 22 이상: 컨테이너와 GitHub Actions에서는 Node 24를 사용합니다.
+- Node.js 22 이상: 기존 수동 npm 명령을 사용할 때만 호스트에 필요합니다. 프런트엔드 빌드 컨테이너는 Node 24를 사용합니다.
+- GitHub CLI와 Windows 기본 curl: 로컬 배포 러너의 PATH에서 실행 가능해야 합니다. PR의 Ubuntu 러너에는 gh와 jq가 제공됩니다.
 - 최초 Docker 이미지 다운로드를 위한 인터넷 연결이 필요합니다.
 
 루트 실행기에는 추가 npm 의존성이 없어 호스트의 `npm install`은 필요 없습니다.
@@ -50,7 +52,7 @@ flowchart TD
 | [policy/access.rego](policy/access.rego) | `shared`와 권한 제어 파일을 멤버만 변경하도록 하는 PR/CD 공통 정책 | 변경 가능한 범위를 바꿀 때 |
 | [policy/members.json](policy/members.json) | 멤버 GitHub 로그인 목록. 기본값은 `leeggmin` | 멤버를 추가/삭제할 때 |
 | [policy/access_test.rego](policy/access_test.rego) | 멤버/비멤버, 이름 변경, 우회와 누락 입력 테스트 | 권한 정책을 수정할 때 |
-| [scripts/access.mjs](scripts/access.mjs) | CI의 GitHub 입력 수집과 로컬·배포 실행기의 권한 재검사 | GitHub 연결이나 신원 수집을 바꿀 때 |
+| [scripts/access.mjs](scripts/access.mjs) | 기존 수동 명령용 입력 수집·권한 검사. CI/CD에서는 사용하지 않음 | 수동 실행 도구를 바꿀 때 |
 | [scripts/access.test.mjs](scripts/access.test.mjs) | 원작성자 추적, 직접 push와 불완전한 메타데이터 차단 테스트 | 입력 수집을 수정할 때 |
 | [examples/access/member-shared.json](examples/access/member-shared.json) | 멤버의 `shared` 변경 예제 | 허용 실습 |
 | [examples/access/nonmember-feature.json](examples/access/nonmember-feature.json) | 비멤버의 일반 기능 변경 예제 | 허용 실습 |
@@ -61,7 +63,7 @@ flowchart TD
 | [deploy/development.json](deploy/development.json) | 기본 배포 요청: 이미지, 포트, 보안 옵션 등 | 배포하려는 설정을 바꿀 때 |
 | [deploy/denied-latest.json](deploy/denied-latest.json) | `latest` 태그 때문에 거부되는 예제 | 이미지 태그 규칙의 차단 결과를 볼 때 |
 | [deploy/denied-privileged.json](deploy/denied-privileged.json) | `privileged: true` 때문에 거부되는 예제 | 권한 관련 차단 결과를 볼 때 |
-| [scripts/lab.mjs](scripts/lab.mjs) | OPA 실행, 결과 확인, 이미지 빌드, 컨테이너 배포·검증·종료 | 검사와 배포를 연결하는 실행 흐름을 바꿀 때 |
+| [scripts/lab.mjs](scripts/lab.mjs) | 기존 수동 Docker 실습 도구. CI/CD에서는 사용하지 않음 | 수동 실행 도구를 바꿀 때 |
 | [app/server.mjs](app/server.mjs) | 프런트엔드 정적 파일과 SPA 경로, `/health`, `/api/info` 제공 | 정적 파일 제공 방식을 바꿀 때 |
 | [Dockerfile](Dockerfile) | 프런트엔드 빌드와 non-root 정적 서버의 다단계 이미지 | 이미지 구성이나 앱 시작 방법을 바꿀 때 |
 | [package.json](package.json) | `npm test`, `npm run lab:deploy` 등의 명령 별칭 | 명령을 추가하거나 바꿀 때 |
@@ -93,7 +95,7 @@ flowchart TD
 
 1. **PR 단계**: GitHub API에서 PR 원작성자와 모든 변경 파일을 가져와 기준 브랜치의 정책·멤버 목록으로 검사합니다.
 2. **배포 단계**: 실제 배포 커밋 SHA와 연결된 병합 PR을 조회하고, 병합자가 아닌 **원래 PR 작성자**를 다시 검사합니다.
-3. 실제 `lab:deploy` 함수도 빌드 직전에 같은 권한 검사를 반복합니다. 권한 입력이 없으면 실행하지 않습니다.
+3. 워크플로의 Docker 빌드 직전에도 권한과 배포 설정을 다시 평가합니다. 기존 수동 `lab:deploy`도 자체 재검사를 유지합니다.
 
 권한 주석은 [.github/workflows/ci.yml](.github/workflows/ci.yml)의 `1차 PR 차단`, `2차 배포 차단`과
 [scripts/lab.mjs](scripts/lab.mjs)의 `CD gate` 부분에 있습니다.
@@ -217,30 +219,35 @@ VS Code에서는 명령 팔레트의 `Tasks: Run Task`에서 `OPA lab:` 작업�
 
 ### YAML에서 OPA 직접 실행
 
+기준은 OPA 공식 [Pull Request Check Policies](https://www.openpolicyagent.org/docs/cicd/pr-checks)의
+**GitHub API 입력 수집 → JSON 생성 → OPA 평가 → 워크플로 제어** 패턴입니다.
 PR 검사와 배포 전 검사는 `open-policy-agent/setup-opa@v2`로 OPA CLI **1.10.1**을 설치하고,
 YAML의 `run`에서 `opa test`와 `opa eval`을 직접 실행합니다. 별도 OPA 서버는 필요 없습니다.
 `latest` 대신 로컬 정책 실행기와 같은 버전을 고정합니다.
 
-PR 작업의 핵심 단계는 다음과 같습니다. 전체 단계는 [.github/workflows/ci.yml](.github/workflows/ci.yml)에 있습니다.
+| 단계 | PR 검사: GitHub Ubuntu | 배포: 로컬 Windows |
+| --- | --- | --- |
+| 작성자·변경 파일 수집 | `gh api` | `gh api` |
+| JSON 조합·출처 검증 | Bash와 jq | PowerShell의 JSON 기능 |
+| 정책 테스트·평가 | `opa test`, `opa eval` | `opa test`, `opa eval` |
+| 실제 앱 배포·검증 | 실행하지 않음 | `docker`, `curl.exe`, `Invoke-RestMethod` |
 
-```yaml
-- uses: open-policy-agent/setup-opa@v2
-     with:
-          version: '1.10.1'
-- run: opa test policy/ -v
-- name: Collect trusted PR input
-     run: node scripts/access.mjs collect pr
-     env:
-          GITHUB_TOKEN: ${{ github.token }}
-- name: Evaluate PR access directly with OPA
-     run: |
-          opa eval --format pretty --input .opa/access-context.json --data policy/access.rego --data policy/members.json data.access
-          opa eval --fail --format raw --input .opa/access-context.json --data policy/access.rego --data policy/members.json 'data.access.allow = true'
+PR 입력 수집의 핵심 API 명령은 다음과 같습니다. JSON 조합과 SHA·파일 목록 검증까지 포함한 전체 코드는
+[.github/workflows/ci.yml](.github/workflows/ci.yml)의 `Collect trusted PR input` 단계에 있습니다.
+
+```bash
+gh api "repos/$GH_REPO/pulls/$PR_NUMBER" > .opa/pull.json
+gh api --paginate --slurp "repos/$GH_REPO/pulls/$PR_NUMBER/files?per_page=100" > .opa/file-pages.json
 ```
 
-`collect pr`와 `collect deploy`는 GitHub API 메타데이터를 검증해 `.opa/access-context.json`만 만듭니다.
-이 명령은 OPA를 실행하거나 권한을 승인하지 않습니다. 다음 YAML 단계가 입력 JSON과 정책·멤버 데이터를 OPA에 전달합니다.
-Rego가 직접 GitHub나 파일을 조회하는 구조가 아닙니다.
+`--paginate --slurp`로 페이지들을 하나의 JSON 값으로 받은 뒤, jq의 `add`로 변경 파일 배열을 합칩니다.
+작성자·단계·변경 파일·커밋 SHA를 `.opa/access-context.json`에 구성하고 다음 단계가 이를 OPA에 전달합니다.
+배포 작업도 같은 정보를 PowerShell로 구성합니다. Rego가 GitHub나 파일을 직접 조회하는 구조가 아닙니다.
+
+```bash
+opa test policy/ -v
+opa eval --fail --format raw --input .opa/access-context.json --data policy/access.rego --data policy/members.json 'data.access.allow = true'
+```
 
 `opa eval --fail`은 결과가 정의되지 않았을 때 실패하므로, 단순 값 조회나 `== true` 비교식은 `false`를 반환해도 정상 종료할 수 있습니다.
 통합식 `data.access.allow = true`를 질의하면 실제 허용 값이 `true`일 때만 성립하고, 거부·미정의 결과는 실패합니다.
@@ -248,9 +255,15 @@ Rego가 직접 GitHub나 파일을 조회하는 구조가 아닙니다.
 Windows 배포 작업은 각 OPA 명령 직후 `$LASTEXITCODE`를 확인합니다.
 작성자 권한 외에 배포 JSON의 허용 여부와 위험 설정 예제도 YAML에서 직접 평가합니다.
 
-Node 스크립트는 GitHub 입력의 출처·완전성 검증과 Docker 빌드·실행에 계속 사용합니다.
-기존 `github` 명령의 수집·평가 통합 기능과 `lab:deploy` 내부의 OPA Docker 재검사는 유지합니다.
-따라서 YAML을 거치지 않고 배포 실행기를 직접 호출해도 권한·배포 설정 검사가 생략되지 않습니다.
+공식 예제와 이 저장소의 차이는 다음과 같습니다.
+
+- 공식 예제는 변경 경로별 검사 선택이고, 여기서는 기존 멤버 권한을 검사해 거부 시 job을 실패시킵니다. 없는 backend·docs job과 불필요한 job 출력·summary는 추가하지 않습니다.
+- PR의 정책 수정으로 자기 권한을 승인하지 못하도록 `pull_request_target`과 기준 브랜치 checkout을 유지합니다. PR의 코드는 실행하지 않습니다.
+- 배포 전에는 병합 PR의 원작성자와 SHA를 다시 확인하며, 직접 push·누락·중복 파일 목록은 차단합니다.
+- 권한 차단에 사용하므로 평가 오류를 숨기거나 거부 결과를 기본 허용으로 바꾸지 않습니다.
+
+기존 Node 스크립트와 npm 별칭은 수동 실습 명령의 호환성을 위해 남겨 두었습니다. GitHub CI/CD는 호출하지 않습니다.
+프런트엔드 Dockerfile 안의 `npm ci`와 `npm run build`는 앱 빌드에 필요한 명령으로, OPA 연결용 스크립트와는 별개입니다.
 
 ### 검사 기준과 병합 보호
 

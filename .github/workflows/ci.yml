@@ -30,25 +30,37 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
       - name: Set up OPA CLI
         uses: open-policy-agent/setup-opa@v2
         with:
           version: '1.10.1'
 
-      - name: Test GitHub input collection
-        run: node --test scripts/access.test.mjs
-
       - name: Test trusted Rego policies directly
         run: opa test policy/ -v
 
       - name: Collect trusted PR input
-        run: node scripts/access.mjs collect pr
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p .opa
+          gh api "repos/$GH_REPO/pulls/$PR_NUMBER" > .opa/pull.json
+          gh api --paginate --slurp "repos/$GH_REPO/pulls/$PR_NUMBER/files?per_page=100" > .opa/file-pages.json
+          jq -en --slurpfile pull .opa/pull.json --slurpfile pages .opa/file-pages.json \
+            --arg repository "$GH_REPO" --arg head "$PR_HEAD_SHA" --argjson number "$PR_NUMBER" '
+            $pull[0] as $pr | ($pages[0] | add) as $files |
+            if $pr.number == $number and $pr.base.repo.full_name == $repository and $pr.base.ref == "main"
+              and $pr.head.sha == $head and ($head | length) > 0
+              and ($pr.changed_files | type) == "number" and $pr.changed_files >= 1 and $pr.changed_files <= 3000
+              and $pr.changed_files == ($pr.changed_files | floor)
+              and ($files | length) == $pr.changed_files
+              and ($files | map(.filename) | unique | length) == $pr.changed_files
+            then {source: "github-api", actor: $pr.user.login, stage: "pr", changes: $files,
+              revision: $head, pr_number: $number}
+            else error("Invalid or incomplete PR metadata; refusing to authorize.") end
+            ' > .opa/access-context.json
 
       # main 보호 규칙에서 'PR package access'를 필수 검사로 지정해야 병합이 실제 차단됩니다.
       - name: Evaluate PR access directly with OPA
@@ -73,10 +85,6 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
       - name: Set up OPA CLI
         uses: open-policy-agent/setup-opa@v2
         with:
@@ -85,9 +93,46 @@ jobs:
       # 2차 배포 차단: 배포 SHA의 병합된 PR을 찾아 병합자가 아닌 원래 PR 작성자를 재검사합니다.
       # 직접 push나 불완전한 메타데이터는 빌드/배포 전에 차단합니다.
       - name: Collect trusted deployment input
-        run: node scripts/access.mjs collect deploy
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+          $associatedJson = gh api "repos/$env:GH_REPO/commits/$env:GITHUB_SHA/pulls?per_page=100"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $associated = $associatedJson | ConvertFrom-Json
+          $merged = @($associated | Where-Object {
+            $_.merged_at -and $_.merge_commit_sha -eq $env:GITHUB_SHA -and
+            $_.base.repo.full_name -eq $env:GH_REPO -and $_.base.ref -eq 'main'
+          })
+          if ($merged.Count -ne 1) { throw 'Deployment requires exactly one merged PR; direct pushes are blocked.' }
+          $number = $merged[0].number
+          $pullJson = gh api "repos/$env:GH_REPO/pulls/$number"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $pull = $pullJson | ConvertFrom-Json
+          if ($pull.number -ne $number -or $pull.base.repo.full_name -ne $env:GH_REPO -or
+              $pull.base.ref -ne 'main' -or -not $pull.merged_at -or $pull.merge_commit_sha -ne $env:GITHUB_SHA) {
+            throw 'Merged PR provenance does not match the deployed commit.'
+          }
+          if (($pull.changed_files -isnot [int] -and $pull.changed_files -isnot [long]) -or
+              $pull.changed_files -lt 1 -or $pull.changed_files -gt 3000) {
+            throw 'Cannot safely inspect the entire PR file list (supported range: 1-3000).'
+          }
+          $pagesJson = gh api --paginate --slurp "repos/$env:GH_REPO/pulls/$number/files?per_page=100"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $pages = $pagesJson | ConvertFrom-Json
+          $changes = @($pages | ForEach-Object { $_ | ForEach-Object { $_ } })
+          if ($changes.Count -ne $pull.changed_files -or
+              @($changes.filename | Sort-Object -Unique -CaseSensitive).Count -ne $changes.Count) {
+            throw 'Incomplete or duplicate changed-file metadata; refusing to authorize.'
+          }
+          $context = @{
+            source = 'github-api'; actor = $pull.user.login; stage = 'deploy'; changes = $changes
+            revision = $env:GITHUB_SHA; pr_number = $number
+          }
+          New-Item -ItemType Directory -Force .opa | Out-Null
+          [IO.File]::WriteAllText((Join-Path $PWD $env:OPA_ACCESS_CONTEXT),
+            ($context | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
 
       - name: Evaluate deployment access directly with OPA
         run: |
@@ -95,9 +140,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           opa eval --fail --format raw --input $env:OPA_ACCESS_CONTEXT --data policy/access.rego --data policy/members.json 'data.access.allow = true'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Test GitHub input collection
-        run: node --test scripts/access.test.mjs
 
       - name: Test Rego policies directly
         run: opa test policy/ -v
@@ -116,9 +158,56 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
-      # lab:deploy repeats authorization immediately before docker build/run, even when called directly.
       - name: Build and deploy the frontend on the local Docker host
-        run: npm run lab:deploy
+        run: |
+          $context = Get-Content $env:OPA_ACCESS_CONTEXT -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($context.source -ne 'github-api' -or $context.revision -ne $env:GITHUB_SHA -or $context.stage -ne 'deploy') {
+            throw 'Deployment requires GitHub-derived input for the exact revision.'
+          }
+          opa eval --fail --format raw --input $env:OPA_ACCESS_CONTEXT --data policy/access.rego --data policy/members.json 'data.access.allow = true'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $deployment = Get-Content deploy/development.json -Raw -Encoding UTF8 | ConvertFrom-Json
+          $deployment | ConvertTo-Json -Depth 10 | opa eval --fail --format raw --stdin-input --data policy/deploy.rego 'data.deploy.allow = true'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $platform = docker info --format '{{.OSType}}'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($platform -ne 'linux') { throw 'Docker Desktop must use the Linux container engine.' }
+          $existingId = docker ps --all --filter "name=^/$($deployment.service)$" --format '{{.ID}}'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($existingId) {
+            $labelsJson = docker inspect --format '{{json .Config.Labels}}' $existingId
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $labels = $labelsJson | ConvertFrom-Json
+            if ($labels.'com.opa.lab' -ne 'local-cicd') { throw 'An unrelated container exists; it will not be removed.' }
+          }
+          docker build --tag $deployment.image .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($existingId) {
+            docker rm --force $existingId
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          $runArgs = @(
+            'run', '--detach', '--name', $deployment.service,
+            '--label', 'com.opa.lab=local-cicd',
+            '--publish', "127.0.0.1:$($deployment.host_port):$($deployment.container_port)",
+            '--user', "$($deployment.run_as_user):$($deployment.run_as_user)",
+            '--memory', '128m', '--cpus', '0.5', '--pids-limit', '64',
+            '--read-only', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true',
+            '--env', "APP_VERSION=$($deployment.image.Split(':')[1])", $deployment.image
+          )
+          docker @runArgs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify deployment
-        run: npm run lab:verify
+        run: |
+          $deployment = Get-Content deploy/development.json -Raw -Encoding UTF8 | ConvertFrom-Json
+          $url = "http://127.0.0.1:$($deployment.host_port)"
+          curl.exe --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 --max-time 2 --retry-max-time 30 "$url/health"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $health = Invoke-RestMethod "$url/health" -TimeoutSec 3
+          $details = Invoke-RestMethod "$url/api/info" -TimeoutSec 3
+          if ($health.status -ne 'ok' -or $details.service -ne $deployment.service -or
+              $details.version -ne $deployment.image.Split(':')[1]) {
+            throw 'The deployed application returned unexpected health or metadata.'
+          }
+          Write-Output "Healthy deployment: $url"
